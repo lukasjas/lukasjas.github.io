@@ -1,0 +1,12 @@
+{
+  "name": "lukasjas.github.io",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun build.ts",
+    "serve": "bun build.ts && bunx serve ."
+  },
+  "dependencies": {
+    "marked": "^15.0.0"
+  }
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-// Static site generator. Reads posts/*.md, writes index.html, blog/index.html
-// and blog/<slug>/index.html. Output is committed, so GitHub Pages serves it
+// Static site generator. Reads posts/*.md, writes index.html, about/index.html,
+// blog/index.html and blog/<slug>/index.html. Output is committed, so GitHub Pages serves it
 // directly — no Actions workflow, nothing to debug in CI.
 
 import { marked } from "marked";
@@ -17,6 +17,15 @@ const SITE = {
   github: "https://github.com/lukasjas",
   email: "lukas.jasinskas77@gmail.com",
 };
+
+/** About page: role and country, oldest first. */
+const CAREER = [
+  ["Tower climbing and rigging", "US"],
+  ["Base station installation lead", "DE"],
+  ["Technical design, mobile deployments", "NO"],
+  ["Software", "NO"],
+];
+const STACK = ["TypeScript", "Python", "React", "FastAPI", "PostgreSQL"];
 
 type Post = {
   slug: string;
@@ -58,6 +67,7 @@ function formatDate(iso: string) {
 function page({ title, description, body, path }: {
   title: string; description: string; body: string; path: string;
 }) {
+  const current = (href: string) => (path === href ? ` aria-current="page"` : "");
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -69,18 +79,26 @@ function page({ title, description, body, path }: {
 <meta property="og:title" content="${escape(title)}">
 <meta property="og:description" content="${escape(description)}">
 <meta property="og:url" content="${SITE.url}${path}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;700&display=swap">
 <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
 <header>
-  <a class="wordmark" href="/">${escape(SITE.name)}</a>
-  <nav><a href="/blog">Blog</a><a href="${SITE.github}">GitHub</a></nav>
+  <div>
+    <a class="wordmark" href="/">${escape(SITE.name)}</a>
+    <nav><a href="/about/"${current("/about/")}>About</a><a href="${SITE.github}">GitHub</a></nav>
+  </div>
 </header>
 <main>
 ${body}
 </main>
 <footer>
-  <a href="mailto:${SITE.email}">${SITE.email}</a> · <a href="${SITE.github}">github.com/lukasjas</a>
+  <div>
+    <a href="mailto:${SITE.email}">${SITE.email}</a>
+    <a href="${SITE.github}">github.com/lukasjas</a>
+  </div>
 </footer>
 </body>
 </html>
@@ -116,10 +134,10 @@ async function loadPosts(): Promise<Post[]> {
 
 function postListing(posts: Post[]) {
   if (!posts.length) return `<p class="empty">Nothing published yet.</p>`;
-  return `<ul class="posts">
+  return `<ul class="rows posts">
 ${posts.map((p) => `  <li>
+    <time class="meta" datetime="${p.date}">${p.date.slice(0, 7)}</time>
     <a href="/blog/${p.slug}/">${escape(p.title)}</a>
-    <time datetime="${p.date}">${formatDate(p.date)}</time>
     ${p.summary ? `<p>${escape(p.summary)}</p>` : ""}
   </li>`).join("\n")}
 </ul>`;
@@ -139,23 +157,37 @@ await write("index.html", page({
   title: SITE.name,
   description: SITE.tagline,
   path: "/",
-  body: `<h1>${escape(SITE.name)}</h1>
-<p class="lede">${escape(SITE.tagline)}</p>
-<p>Four years on telecom infrastructure — tower climbing and rigging in the US, leading base
-station installations in Germany, then technical design for mobile deployments in Norway. Now I
-write the software instead: TypeScript and Python, React on the front, FastAPI and PostgreSQL
-behind it.</p>
-<h2>Writing</h2>
-${postListing(posts.slice(0, 5))}
-${posts.length > 5 ? `<p><a href="/blog">All posts →</a></p>` : ""}`,
+  body: `<p class="label">Writing</p>
+${postListing(posts.slice(0, 10))}
+${posts.length > 10 ? `<p class="more"><a href="/blog">All posts →</a></p>` : ""}`,
+}));
+
+await write("about/index.html", page({
+  title: `About — ${SITE.name}`,
+  description: SITE.tagline,
+  path: "/about/",
+  body: `<h1 class="lede">${escape(SITE.tagline)}</h1>
+<p class="bio">Four years on telecom infrastructure, in the field and then at the drawing board. Now I
+write the software instead.</p>
+<section>
+<p class="label">Career</p>
+<ul class="rows career">
+${CAREER.map(([role, where], i) => `  <li><span class="meta">${String(i + 1).padStart(2, "0")}</span><span>${role}</span><span class="meta">${where}</span></li>`).join("\n")}
+</ul>
+</section>
+<section>
+<p class="label">Stack</p>
+<ul class="stack">
+${STACK.map((s) => `  <li>${s}</li>`).join("\n")}
+</ul>
+</section>`,
 }));
 
 await write("blog/index.html", page({
   title: `Blog — ${SITE.name}`,
   description: `Notes on field work, documentation, and the software in between.`,
   path: "/blog",
-  body: `<h1>Blog</h1>
-<p class="lede">Notes on field work, documentation, and the software in between.</p>
+  body: `<p class="label">All writing</p>
 ${postListing(posts)}`,
 }));
 
@@ -165,11 +197,11 @@ for (const post of posts) {
     description: post.summary || post.title,
     path: `/blog/${post.slug}/`,
     body: `<article>
-<h1>${escape(post.title)}</h1>
 <time datetime="${post.date}">${formatDate(post.date)}</time>
+<h1>${escape(post.title)}</h1>
 ${post.html}
 </article>
-<p class="back"><a href="/blog">← All posts</a></p>`,
+<p class="back"><a href="/">← All writing</a></p>`,
   }));
 }
 

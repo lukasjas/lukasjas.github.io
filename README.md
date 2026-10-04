@@ -25,7 +25,7 @@ Body starts here.
 
 ```bash
 bun install        # once
-bun run build      # regenerates index.html, blog/, blog/<slug>/
+bun run build      # regenerates index.html, about/, blog/, blog/<slug>/
 git add -A && git commit -m "post: ..." && git push
 ```
 
@@ -41,12 +41,13 @@ bun run serve      # http://localhost:3000
 
 ```
 build.ts       generator — front matter parsing, templates, output
-styles.css     the whole design, ~140 lines, light and dark
+styles.css     the whole design, ~200 lines, dark with a light variant
 posts/         markdown source — the only thing you edit to publish
 index.html     generated
 blog/          generated
+about/         generated — career and stack lists live at the top of build.ts
 .nojekyll      stops GitHub running Jekyll over the output
 ```
 
-Editing anything under `blog/` or `index.html` by hand is pointless — the next build overwrites it.
+Editing anything under `blog/`, `about/` or `index.html` by hand is pointless — the next build overwrites it.
 Change `build.ts` or `styles.css` instead.

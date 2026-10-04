@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <rect width="760" height="300" fill="#fdfdfc"/>
+  <defs><marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#1a1a18"/></marker></defs>
+  <g fill="#fdfdfc" stroke="#1a1a18" stroke-width="1.5">
+    <rect x="20" y="40" width="150" height="110"/>
+    <rect x="235" y="40" width="150" height="110"/>
+    <rect x="450" y="40" width="130" height="110"/>
+    <rect x="645" y="40" width="95" height="110"/>
+    <rect x="205" y="215" width="210" height="60" stroke="#b4552d"/>
+  </g>
+  <g fill="#1a1a18" font-weight="bold">
+    <text x="95" y="66" text-anchor="middle">Sources</text>
+    <text x="310" y="66" text-anchor="middle">Facts</text>
+    <text x="515" y="66" text-anchor="middle">Rules</text>
+    <text x="692" y="66" text-anchor="middle">Documents</text>
+    <text x="310" y="240" text-anchor="middle" fill="#b4552d">Missing facts</text>
+  </g>
+  <g fill="#6b6b63" font-size="12.5">
+    <text x="95" y="90" text-anchor="middle">engineer input</text>
+    <text x="95" y="108" text-anchor="middle">source PDF capture</text>
+    <text x="95" y="126" text-anchor="middle">catalog pick</text>
+    <text x="310" y="90" text-anchor="middle">append-only</text>
+    <text x="310" y="108" text-anchor="middle">each records</text>
+    <text x="310" y="126" text-anchor="middle">its source</text>
+    <text x="515" y="90" text-anchor="middle">rows of data</text>
+    <text x="515" y="108" text-anchor="middle">each cites a</text>
+    <text x="515" y="126" text-anchor="middle">spec clause</text>
+    <text x="692" y="90" text-anchor="middle">TSSR</text>
+    <text x="692" y="108" text-anchor="middle">BOQ</text>
+    <text x="310" y="260" text-anchor="middle">required, absent, with reason</text>
+    <text x="418" y="72" text-anchor="middle">trigger</text>
+    <text x="418" y="138" text-anchor="middle">derive</text>
+    <text x="205" y="88" text-anchor="middle">confirm</text>
+    <text x="514" y="190" text-anchor="middle">render from current facts</text>
+  </g>
+  <g stroke="#1a1a18" stroke-width="1.5" fill="none" marker-end="url(#a)">
+    <path d="M170,95 H233"/>
+    <path d="M385,82 H448"/>
+    <path d="M450,120 H387"/>
+    <path d="M360,150 V172 H692 V152"/>
+    <path d="M290,150 V213" stroke="#b4552d"/>
+  </g>
+</svg>

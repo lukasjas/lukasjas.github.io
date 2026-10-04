@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 200" font-family="Helvetica, Arial, sans-serif" font-size="14">
+<rect width="760" height="200" fill="#fdfdfc"/>
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#1a1a18"/></marker><marker id="b" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#b4552d"/></marker></defs>
+<g fill="#fdfdfc" stroke="#1a1a18" stroke-width="1.5"><rect x="20" y="30" width="120" height="70"/><rect x="170" y="30" width="120" height="70"/><rect x="320" y="30" width="120" height="70"/><rect x="470" y="30" width="120" height="70"/><rect x="620" y="30" width="120" height="70"/></g>
+<g fill="#1a1a18" font-weight="bold"><text x="80" y="60" text-anchor="middle">Configuration</text><text x="230" y="60" text-anchor="middle">Sectors</text><text x="380" y="60" text-anchor="middle">Radios</text><text x="530" y="60" text-anchor="middle">Cables</text><text x="680" y="60" text-anchor="middle">BOQ lines</text></g>
+<g fill="#6b6b63" font-size="12.5"><text x="80" y="82" text-anchor="middle">NLLL</text><text x="230" y="82" text-anchor="middle">3</text><text x="380" y="82" text-anchor="middle">count</text><text x="530" y="82" text-anchor="middle">counts</text><text x="680" y="82" text-anchor="middle">quantities</text><text x="305" y="150" text-anchor="middle">TSSR (Word)</text><text x="680" y="150" text-anchor="middle">BOQ (Excel)</text></g>
+<g stroke="#1a1a18" stroke-width="1.5" fill="none" marker-end="url(#a)"><path d="M140,65 H168"/><path d="M290,65 H318"/><path d="M440,65 H468"/><path d="M590,65 H618"/></g>
+<g stroke="#6b6b63" stroke-width="1.2" fill="none"><path d="M20,112 V124 H590 V112"/><path d="M620,112 V124 H740 V112"/></g>
+<text x="380" y="184" text-anchor="middle" fill="#b4552d" font-weight="bold">Every arrow is kept in step by a person</text>
+</svg>

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kverna: generated documents need receipts — Lukas Jasinskas</title>
+<meta name="description" content="An engine that produces telecom site documents, shows where each value came from, and lists what is missing instead of guessing. What it does, how it is built, and what is unfinished.">
+<link rel="canonical" href="https://lukasjas.github.io/blog/kverna/">
+<meta property="og:title" content="Kverna: generated documents need receipts — Lukas Jasinskas">
+<meta property="og:description" content="An engine that produces telecom site documents, shows where each value came from, and lists what is missing instead of guessing. What it does, how it is built, and what is unfinished.">
+<meta property="og:url" content="https://lukasjas.github.io/blog/kverna/">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header>
+  <a class="wordmark" href="/">Lukas Jasinskas</a>
+  <nav><a href="/blog">Blog</a><a href="https://github.com/lukasjas">GitHub</a></nav>
+</header>
+<main>
+<article>
+<h1>Kverna: generated documents need receipts</h1>
+<time datetime="2026-10-04">4 October 2026</time>
+<p>Kverna is an application I built between March and June 2026. It produces two documents for a
+mobile network site: the technical site survey report (TSSR), which describes what will be built
+and where, and the bill of quantities (BOQ), which lists every item needed to build it.</p>
+<p>It does that under two constraints. Every value in the output can be traced to where it came from.
+Anything that cannot be derived is listed as missing, with a reason, and is never filled in.</p>
+<h2>The problem</h2>
+<p>I wrote these documents by hand for about a year, for a Norwegian mobile operator. The TSSR is a
+Word file and the BOQ is an Excel file. The same value appears in several places across both. The
+number of sectors on a site decides the number of radios, which decides cable counts, which decide
+BOQ lines. Change one and you update the rest yourself.</p>
+<p><img src="/images/kverna/dependency-chain.svg" alt="Diagram: the site configuration decides the sector count, which decides radio counts, cable counts and BOQ lines, across a Word file and an Excel file. Every step is kept in step by a person."></p>
+<p><em>One value at the start of the chain decides many others, across two files.</em></p>
+<p>Word and Excel do not check that you did. The checking is done by people, after the document is
+written: the contractor reviews the TSSR for completeness before it goes to the operator, and the
+operator approves it. What a reviewer catches comes back as a revision. What a reviewer misses goes
+into the BOQ, and a wrong BOQ line becomes wrong material on site, a team that cannot install, and
+a re-order.</p>
+<p><img src="/images/kverna/review-loop.svg" alt="Diagram: a TSSR passes contractor review and operator approval. An error caught there comes back as a revision. An error missed goes into the ordered BOQ and arrives as wrong material on site."></p>
+<p><em>The checking happens after the writing. What it misses is found on site.</em></p>
+<p>Neither document is paperwork in the sense of a form to fill in. Every value in a TSSR is an
+engineering decision, and the BOQ is what those decisions cost in material. But the operator
+requires the work in its own templates, so the template becomes the place where the engineering
+is done, and a template checks nothing.</p>
+<p>That is one cause of errors, and a narrow one. The radio plan can be wrong before anyone
+visits the site. The survey can miss something, or be done by one person and written up by
+another. Scope changes after the report is delivered. And the process is not a straight line:
+several parties work on the same site, and their changes reach each other late. The business
+sets its own limits too: fixed prices and deadlines decide how much time a report gets. Each of these is
+a topic of its own, and this post covers none of them. It is about Kverna as a technical project:
+the model, how it works, and what is unfinished.</p>
+<h2>The model</h2>
+<p>Kverna treats the document as a view, not as the thing you edit. The engineering moves out of
+the template into facts and rules, and the template goes back to being output.</p>
+<p><img src="/images/kverna/model.svg" alt="Diagram: sources feed facts, facts trigger rules, rules derive more facts, documents are rendered from the current facts, and required facts that are absent are listed as missing."></p>
+<p><strong>Facts.</strong> A fact is a key and a value: <code>site_configuration = NLLL</code>, <code>antenna_height_m = 24</code>.
+Facts are append-only. A changed value is a new row that supersedes the old one, so the history
+of every value stays in the database. Each fact records its source: typed by the engineer, picked
+from a catalog, highlighted in a source PDF, or derived by a rule.</p>
+<p><strong>Rules.</strong> A rule is a row in a table, not a branch in the code. This is one, abridged:</p>
+<pre><code class="language-json">{
+  &quot;pattern&quot;: &quot;site_configuration&quot;,
+  &quot;condition&quot;: &quot;len(site_configuration) &gt; 1&quot;,
+  &quot;output_key&quot;: &quot;sector_count&quot;,
+  &quot;output_expr&quot;: &quot;len(site_configuration) - 1&quot;,
+  &quot;scope_type&quot;: &quot;operator&quot;,
+  &quot;description&quot;: &quot;Sector count = letters after the prefix.&quot;,
+  &quot;cites&quot;: [
+    { &quot;clause&quot;: &quot;4.1&quot;, &quot;title&quot;: &quot;The site model specification&quot; }
+  ]
+}
+</code></pre>
+<p>When <code>site_configuration</code> is written, the rule fires and writes <code>sector_count</code>. That new fact can
+trigger further rules. The engine repeats until nothing changes. The rule carries a citation to
+the clause of the operator&#39;s specification it implements.</p>
+<p><strong>Documents.</strong> A renderer reads the current facts and fills the template. It has no database
+access and no logic of its own.</p>
+<p>Two rules of precedence matter to the person using it. A value the engineer entered by hand is
+never overwritten by a derived one. And a rule scoped to one operator beats a general rule for the
+same output.</p>
+<h2>The two guarantees</h2>
+<p><strong>Trace.</strong> For any value in the output, <code>trace_fact</code> returns the chain: value, the rule that
+produced it, the facts that rule read, the source of each of those facts, and the specification
+clause the rule cites. Rule inputs are reconstructed from the rule&#39;s expression, not logged at
+write time, so the trace cannot drift from what the rule does.</p>
+<p><img src="/images/kverna/trace.png" alt="The provenance panel for one BOQ quantity: the value 3, the rule that produced it, the input fact it read, and the specification clause the rule cites."></p>
+<p><em>One BOQ quantity, traced: value, rule, input fact, specification clause. Demo data.</em></p>
+<p><strong>Missing.</strong> Each document type has a list of facts it requires, stored as data. <code>list_missing_facts</code>
+returns the required keys that are absent, each with the reason it is required. This mirrors the
+completeness check the operator runs on submission. The engine reports the gap; it does not
+estimate a value to close it.</p>
+<p><img src="/images/kverna/missing.png" alt="The body check panel listing six missing facts, each with the reason it is required."></p>
+<p><em>The body check: six facts still missing for the TSSR, each with the reason it is required.</em></p>
+<h2>Where the language model sits</h2>
+<p>A language model can read a source document and propose values. Those go into a separate
+<code>candidate_facts</code> table with a pointer to the place in the source they came from. A person confirms a
+candidate before it becomes a fact. The model never writes a value into the final document, and
+the document is rendered from structured data, not generated prose.</p>
+<p>The same gate applies when the engineer captures a value by marking it in a source PDF:</p>
+<p><img src="/images/kverna/confirm.png" alt="A dialog asking the engineer to confirm a value captured from a radio plan PDF before it becomes a fact."></p>
+<p><em>A value marked in a source PDF is confirmed before it becomes a fact.</em></p>
+<p>Automation is slower this way. Every proposed value waits for a person.</p>
+<h2>One site, start to finish</h2>
+<p>The reference case is a rooftop site I surveyed myself: 248 facts, 44 rules, and its real BOQ
+as the expected output. On that site the work goes in this order:</p>
+<ol>
+<li>The engineer enters what was decided and measured on the survey: the site configuration,
+heights, equipment picked from the catalog. A value that already exists in a source PDF, such as
+the radio plan, is marked there and confirmed.</li>
+<li>Each confirmed value triggers the rules that depend on it. Entering <code>NLLL</code> gives a sector
+count of 3, and the quantities that depend on the sector count follow without being typed.</li>
+<li>The body check lists what the TSSR still requires, each with its reason. The engineer supplies
+those values, or they stay listed as missing.</li>
+<li>The TSSR and the BOQ are rendered from the same facts, so a value cannot differ between
+them.</li>
+<li>A reviewer who doubts a quantity opens its trace and reads the rule, the input and the
+specification clause behind it.</li>
+</ol>
+<h2>What is unfinished</h2>
+<ul>
+<li>One site type, one operator. The claim that the engine carries to other document types is
+argued in the design and not yet shown with a second domain.</li>
+<li>The missing-facts check is direct only. If a missing fact could itself be derived from another
+missing fact, it does not walk upstream.</li>
+<li>Rules do not learn. When an engineer overrides a derived value, that is recorded and nothing
+reads it.</li>
+<li>No offline mode. A rooftop does not always have signal.</li>
+<li>It has been demonstrated to people in the industry. It has not been used on a live job.</li>
+</ul>
+<h2>How it is built</h2>
+<ul>
+<li><strong>Database:</strong> PostgreSQL 16. Facts, rules and requirement lists are all tables. Every table has
+a <code>tenant_id</code>, and row-level security keeps one company&#39;s sites out of another&#39;s queries.</li>
+<li><strong>Backend:</strong> FastAPI on Python 3.12 with raw asyncpg and no ORM. Tenant isolation depends on a
+session variable set on each connection, and I wanted that step visible in the code.</li>
+<li><strong>Rule expressions:</strong> <code>simpleeval</code>, a sandboxed evaluator. Rules are data that anyone with access
+can write, so they never go through <code>eval</code>.</li>
+<li><strong>Tests:</strong> the backend suite runs against a real migrated PostgreSQL, each test in a transaction
+that rolls back. Row-level security cannot be tested against a mock.</li>
+<li><strong>Frontend:</strong> React, TypeScript, Vite, Tailwind.</li>
+</ul>
+<p>The services that store facts and evaluate rules contain no telecom terms. Operator knowledge
+lives in rule files, a product catalog, and requirement lists. Each architectural decision, with
+the reason and the condition for revisiting it, is in <code>DECISIONS.md</code>.</p>
+<p>The code is at <a href="https://github.com/lukasjas/kverna">github.com/lukasjas/kverna</a>. <code>DECISIONS.md</code> is
+the place to start: it records each choice described here, with the reason for it.</p>
+<h2>If this is your work</h2>
+<p>If you write, review or approve these documents at a contractor or an operator and think the
+model is wrong somewhere, I would like to hear where. If you build software and the problem
+interests you, the same applies. Write to
+<a href="mailto:lukas.jasinskas77@gmail.com">lukas.jasinskas77@gmail.com</a>.</p>
+
+
+</article>
+<p class="back"><a href="/blog">← All posts</a></p>
+</main>
+<footer>
+  <a href="mailto:lukas.jasinskas77@gmail.com">lukas.jasinskas77@gmail.com</a> · <a href="https://github.com/lukasjas">github.com/lukasjas</a>
+</footer>
+</body>
+</html>

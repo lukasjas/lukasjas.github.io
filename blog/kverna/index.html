@@ -23,12 +23,14 @@
 <p>Kverna is an application I built between March and June 2026. It produces two documents for a
 mobile network site: the technical site survey report (TSSR), which describes what will be built
 and where, and the bill of quantities (BOQ), which lists every item needed to build it.</p>
-<p>It does that under two constraints. Every value in the output can be traced to where it came from.
-Anything that cannot be derived is listed as missing, with a reason, and is never filled in.</p>
+<p>Kverna treats the document as a view, not as the thing you edit. Underneath it is a graph of
+facts and the rules that connect them. That gives two constraints. Every value in the output can
+be traced to where it came from. Anything that cannot be derived is listed as missing, with a
+reason, and is never filled in.</p>
 <h2>The problem</h2>
 <p>I wrote these documents by hand for about a year, for a Norwegian mobile operator. The TSSR is a
-Word file and the BOQ is an Excel file. The same value appears in several places across both. The
-number of sectors on a site decides the number of radios, which decides cable counts, which decide
+Word file and the BOQ is an Excel file, and the same value appears in several places across both.
+The number of sectors on a site decides the number of radios, which decides cable counts, which decide
 BOQ lines. Change one and you update the rest yourself.</p>
 <p>Word and Excel do not check that you did. The checking is done by people, after the document is
 written: the contractor reviews the TSSR for completeness before it goes to the operator, and the
@@ -36,7 +38,7 @@ operator approves it. What a reviewer catches comes back as a revision. What a r
 into the BOQ, and a wrong BOQ line becomes wrong material on site, a team that cannot install, and
 a re-order.</p>
 <h2>The model</h2>
-<p>Kverna treats the document as a view, not as the thing you edit.</p>
+<p>The graph has three parts: facts, rules, and the documents rendered from them.</p>
 <p><img src="/images/kverna/flow.svg" alt="Diagram: sources feed facts, facts trigger rules, rules derive more facts, documents are rendered from the current facts, and required facts that are absent are listed as missing."></p>
 <p><strong>Facts.</strong> A fact is a key and a value: <code>site_configuration = NLLL</code>, <code>antenna_height_m = 24</code>.
 Facts are append-only. A changed value is a new row that supersedes the old one, so the history
@@ -56,7 +58,7 @@ from a catalog, highlighted in a source PDF, or derived by a rule.</p>
 }
 </code></pre>
 <p>When <code>site_configuration</code> is written, the rule fires and writes <code>sector_count</code>. That new fact can
-trigger further rules. The engine repeats until nothing changes. The rule carries a citation to
+trigger further rules, and the engine repeats until nothing changes. The rule carries a citation to
 the clause of the operator&#39;s specification it implements.</p>
 <p><strong>Documents.</strong> A renderer reads the current facts and fills the template. It has no database
 access and no logic of its own.</p>
@@ -72,10 +74,9 @@ write time, so the trace cannot drift from what the rule does.</p>
 <p><em>One BOQ quantity, traced: value, rule, input fact, specification clause. Demo data.</em></p>
 <p><strong>Missing.</strong> Each document type has a list of facts it requires, stored as data. <code>list_missing_facts</code>
 returns the required keys that are absent, each with the reason it is required. This mirrors the
-completeness check the operator runs on submission. The engine reports the gap; it does not
-estimate a value to close it.</p>
+completeness check the operator runs on submission.</p>
 <p><img src="/images/kverna/body-check.png" alt="The body check panel listing six missing facts, each with the reason it is required."></p>
-<p><em>The body check: six facts still missing for the TSSR, each with the reason it is required.</em></p>
+<p><em>The body check for the demo site.</em></p>
 <h2>Where the language model sits</h2>
 <p>A language model can read a source document and propose values. Those go into a separate
 <code>candidate_facts</code> table with a pointer to the place in the source they came from. A person confirms a
@@ -84,22 +85,18 @@ the document is rendered from structured data, not generated prose.</p>
 <p>The same gate applies when the engineer captures a value by marking it in a source PDF:</p>
 <p><img src="/images/kverna/confirm-capture.png" alt="A dialog asking the engineer to confirm a value captured from a radio plan PDF before it becomes a fact."></p>
 <p><em>A value marked in a source PDF is confirmed before it becomes a fact.</em></p>
-<p>Automation is slower this way. Every proposed value waits for a person.</p>
+<p>Automation is slower this way.</p>
 <h2>How it is built</h2>
-<ul>
-<li><strong>Database:</strong> PostgreSQL 16. Facts, rules and requirement lists are all tables. Every table has
-a <code>tenant_id</code>, and row-level security keeps one company&#39;s sites out of another&#39;s queries.</li>
-<li><strong>Backend:</strong> FastAPI on Python 3.12 with raw asyncpg and no ORM. Tenant isolation depends on a
-session variable set on each connection, and I wanted that step visible in the code.</li>
-<li><strong>Rule expressions:</strong> <code>simpleeval</code>, a sandboxed evaluator. Rules are data that anyone with access
-can write, so they never go through <code>eval</code>.</li>
-<li><strong>Tests:</strong> the backend suite runs against a real migrated PostgreSQL, each test in a transaction
-that rolls back. Row-level security cannot be tested against a mock.</li>
-<li><strong>Frontend:</strong> React, TypeScript, Vite, Tailwind.</li>
-</ul>
+<p>Facts, rules and requirement lists are all tables in PostgreSQL 16. Every table has a
+<code>tenant_id</code>, and row-level security keeps one company&#39;s sites out of another&#39;s queries. That
+isolation depends on a session variable set on each connection, so the FastAPI backend uses raw
+asyncpg with no ORM: I wanted that step visible in the code. For the same reason the tests run
+against a real migrated database, each in a transaction that rolls back. Row-level security cannot
+be tested against a mock.</p>
+<p>Rule expressions are evaluated by <code>simpleeval</code>, a sandboxed evaluator. Rules are data that anyone
+with access can write, so they never go through <code>eval</code>. The frontend is React and TypeScript.</p>
 <p>The services that store facts and evaluate rules contain no telecom terms. Operator knowledge
-lives in rule files, a product catalog, and requirement lists. Each architectural decision, with
-the reason and the condition for revisiting it, is in <code>DECISIONS.md</code>.</p>
+lives in rule files, a product catalog, and requirement lists.</p>
 <p>The reference case is a rooftop site I surveyed myself: 248 facts, 44 rules, and its real BOQ
 as the expected output.</p>
 <h2>What is unfinished</h2>
@@ -116,7 +113,8 @@ it. That is a baseline, not a result.</li>
 <li>It has been demonstrated to people in the industry. It has not been used on a live job.</li>
 </ul>
 <p>The code is at <a href="https://github.com/lukasjas/kverna">github.com/lukasjas/kverna</a>. <code>DECISIONS.md</code> is
-the place to start: it records each choice described here, with the reason for it.</p>
+the place to start: it records each choice described here, with the reason and the condition for
+revisiting it.</p>
 
 </article>
 <p class="back"><a href="/blog">← All posts</a></p>

@@ -88,11 +88,13 @@ completeness check the operator runs on submission.</p>
 model and ask for the result. Kverna is built the other way round. The core runs without one:
 storing facts, firing rules, tracing a value, listing what is missing and rendering the document
 are all deterministic, and the same inputs give the same output every time.</p>
-<p>A language model has one place in the system, as a source. It can read a source document and
-propose values. Those go into a separate
-<code>candidate_facts</code> table with a pointer to the place in the source they came from. A person confirms a
-candidate before it becomes a fact. The model never writes a value into the final document, and
-the document is rendered from structured data, not generated prose.</p>
+<p>That does not shut language models out. One can be useful almost anywhere around the core:
+reading source documents, answering questions about the specification, drafting rules from it. The
+core is not concerned with which of these is in use, or whether any is. Whatever a model produces
+enters the same way as everything else. A proposed value goes into a separate <code>candidate_facts</code>
+table with a pointer to the place in the source it came from, and a person confirms it before it
+becomes a fact. The model never writes a value into the final document, and the document is
+rendered from structured data, not generated prose.</p>
 <p>The same gate applies when the engineer captures a value by marking it in a source PDF:</p>
 <p><img src="/images/kverna/confirm-capture.png" alt="A dialog asking the engineer to confirm a value captured from a radio plan PDF before it becomes a fact."></p>
 <p><em>A value marked in a source PDF is confirmed before it becomes a fact.</em></p>
@@ -126,8 +128,7 @@ it. That is a baseline, not a result.</li>
 <p>The code is at <a href="https://github.com/lukasjas/kverna">github.com/lukasjas/kverna</a>. <code>DECISIONS.md</code> is
 the place to start: it records each choice described here, with the reason and the condition for
 revisiting it.</p>
-<p>I will keep writing on this topic: where a language model belongs in work that has to be checked,
-and what has to sit around it.</p>
+<p>I will keep writing on this topic: how language models fit around work that has to be checked.</p>
 
 </article>
 <p class="back"><a href="/blog">← All posts</a></p>

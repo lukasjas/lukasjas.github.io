@@ -27,6 +27,9 @@ and where, and the bill of quantities (BOQ), which lists every item needed to bu
 facts and the rules that connect them. That gives two constraints. Every value in the output can
 be traced to where it came from. Anything that cannot be derived is listed as missing, with a
 reason, and is never filled in.</p>
+<p>The engine itself knows nothing about telecom. What it addresses is general: provenance,
+traceability and completeness for any document that is produced from inputs by rules. Telecom is
+the first place I applied it.</p>
 <h2>The problem</h2>
 <p>I wrote these documents by hand for about a year, for a Norwegian mobile operator. The TSSR is a
 Word file and the BOQ is an Excel file, and the same value appears in several places across both.
@@ -81,7 +84,12 @@ completeness check the operator runs on submission.</p>
 <p><img src="/images/kverna/body-check.png" alt="The body check panel listing six missing facts, each with the reason it is required."></p>
 <p><em>The body check for the demo site.</em></p>
 <h2>Where the language model sits</h2>
-<p>A language model can read a source document and propose values. Those go into a separate
+<p>In 2026 the obvious way to produce a document like this is to give the inputs to a language
+model and ask for the result. Kverna is built the other way round. The core runs without one:
+storing facts, firing rules, tracing a value, listing what is missing and rendering the document
+are all deterministic, and the same inputs give the same output every time.</p>
+<p>A language model has one place in the system, as a source. It can read a source document and
+propose values. Those go into a separate
 <code>candidate_facts</code> table with a pointer to the place in the source they came from. A person confirms a
 candidate before it becomes a fact. The model never writes a value into the final document, and
 the document is rendered from structured data, not generated prose.</p>
@@ -118,6 +126,8 @@ it. That is a baseline, not a result.</li>
 <p>The code is at <a href="https://github.com/lukasjas/kverna">github.com/lukasjas/kverna</a>. <code>DECISIONS.md</code> is
 the place to start: it records each choice described here, with the reason and the condition for
 revisiting it.</p>
+<p>I will keep writing on this topic: where a language model belongs in work that has to be checked,
+and what has to sit around it.</p>
 
 </article>
 <p class="back"><a href="/blog">← All posts</a></p>

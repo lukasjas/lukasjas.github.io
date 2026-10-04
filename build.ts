@@ -12,20 +12,11 @@ const POSTS_DIR = join(ROOT, "posts");
 
 const SITE = {
   name: "Lukas Jasinskas",
-  tagline: "Building software for infrastructure field crews — I used to be one.",
+  tagline: "Software developer who loves to build and explore.",
   url: "https://lukasjas.github.io",
   github: "https://github.com/lukasjas",
   email: "lukas.jasinskas77@gmail.com",
 };
-
-/** About page: role and country, oldest first. */
-const CAREER = [
-  ["Tower climbing and rigging", "US"],
-  ["Base station installation lead", "DE"],
-  ["Technical design, mobile deployments", "NO"],
-  ["Software", "NO"],
-];
-const STACK = ["TypeScript", "Python", "React", "FastAPI", "PostgreSQL"];
 
 type Post = {
   slug: string;
@@ -166,21 +157,10 @@ await write("about/index.html", page({
   title: `About — ${SITE.name}`,
   description: SITE.tagline,
   path: "/about/",
-  body: `<h1 class="lede">${escape(SITE.tagline)}</h1>
-<p class="bio">Four years on telecom infrastructure, in the field and then at the drawing board. Now I
-write the software instead.</p>
-<section>
-<p class="label">Career</p>
-<ul class="rows career">
-${CAREER.map(([role, where], i) => `  <li><span class="meta">${String(i + 1).padStart(2, "0")}</span><span>${role}</span><span class="meta">${where}</span></li>`).join("\n")}
-</ul>
-</section>
-<section>
-<p class="label">Stack</p>
-<ul class="stack">
-${STACK.map((s) => `  <li>${s}</li>`).join("\n")}
-</ul>
-</section>`,
+  body: `<article>
+<h1>I'm a software developer who loves to build and explore.</h1>
+<p>Any part of the universe will do. If it's made of matter, I'm interested.</p>
+</article>`,
 }));
 
 await write("blog/index.html", page({

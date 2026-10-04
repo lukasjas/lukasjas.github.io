@@ -45,7 +45,7 @@ styles.css     the whole design, ~200 lines, dark with a light variant
 posts/         markdown source — the only thing you edit to publish
 index.html     generated
 blog/          generated
-about/         generated — career and stack lists live at the top of build.ts
+about/         generated — the text lives in build.ts
 .nojekyll      stops GitHub running Jekyll over the output
 ```
 
